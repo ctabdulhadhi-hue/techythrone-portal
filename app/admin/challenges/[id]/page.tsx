@@ -13,7 +13,7 @@ export default async function EditChallengePage({
 
   const { data: challenge, error } = await supabase
     .from('challenges')
-    .select('id, title, slug, description, category, difficulty, points, status, flag_hash, challenge_attachments(id, file_name, file_size, mime_type, created_at)')
+    .select('id, title, slug, description, category, difficulty, points, status, flag_hash, challenge_attachments(id, file_name, file_size_bytes, mime_type, created_at)')
     .eq('id', id)
     .single();
 

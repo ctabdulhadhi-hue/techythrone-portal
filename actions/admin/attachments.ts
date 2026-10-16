@@ -94,7 +94,7 @@ export async function uploadAttachmentAction(
       .from('challenge_attachments')
       .update({
         file_name: file.name,
-        file_size: file.size,
+        file_size_bytes: file.size,
         mime_type: file.type || 'application/octet-stream',
         storage_path: storagePath,
         uploaded_by: adminSession.user.id,
@@ -114,7 +114,7 @@ export async function uploadAttachmentAction(
       .insert({
         challenge_id: challengeId,
         file_name: file.name,
-        file_size: file.size,
+        file_size_bytes: file.size,
         mime_type: file.type || 'application/octet-stream',
         storage_path: storagePath,
         uploaded_by: adminSession.user.id,

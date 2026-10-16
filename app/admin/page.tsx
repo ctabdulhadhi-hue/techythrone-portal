@@ -20,7 +20,7 @@ export default async function AdminOverviewPage() {
   ] = await Promise.all([
     supabase.from('challenges').select('id, title, slug, status, category, difficulty, points, created_at').order('created_at', { ascending: false }),
     supabase.from('profiles').select('id, role, is_active'),
-    supabase.from('challenge_attachments').select('id, file_size'),
+    supabase.from('challenge_attachments').select('id, file_size_bytes'),
   ]);
 
   const chals = challenges || [];
@@ -32,7 +32,7 @@ export default async function AdminOverviewPage() {
   const archivedCount = chals.filter((c) => c.status === 'archived').length;
   const activeUsersCount = profs.filter((p) => p.is_active).length;
   const adminCount = profs.filter((p) => p.role === 'admin').length;
-  const totalAttachmentBytes = atts.reduce((acc, a) => acc + (a.file_size || 0), 0);
+  const totalAttachmentBytes = atts.reduce((acc, a) => acc + (a.file_size_bytes || 0), 0);
   const totalAttachmentMB = (totalAttachmentBytes / (1024 * 1024)).toFixed(2);
 
   return (

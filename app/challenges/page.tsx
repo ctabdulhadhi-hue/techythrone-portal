@@ -33,7 +33,7 @@ export default async function ChallengesPage({
 
   let query = supabase
     .from('challenges')
-    .select('id, title, slug, description, category, difficulty, points, status, challenge_attachments(id, file_name, file_size)')
+    .select('id, title, slug, description, category, difficulty, points, status, challenge_attachments(id, file_name, file_size_bytes)')
     .eq('status', 'published')
     .order('points', { ascending: true });
 

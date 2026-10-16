@@ -13,7 +13,7 @@ export default async function AdminChallengesPage({
 
   let query = supabase
     .from('challenges')
-    .select('id, title, slug, category, difficulty, points, status, created_at, challenge_attachments(id, file_name, file_size)')
+    .select('id, title, slug, category, difficulty, points, status, created_at, challenge_attachments(id, file_name, file_size_bytes)')
     .order('created_at', { ascending: false });
 
   if (params.status) {

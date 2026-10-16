@@ -7,7 +7,7 @@ import { Paperclip, Upload, Trash2, Download, AlertCircle, CheckCircle2, Loader2
 interface AttachmentData {
   id: string;
   file_name: string;
-  file_size: number;
+  file_size_bytes: number;
   mime_type: string;
   created_at: string;
 }
@@ -60,7 +60,7 @@ export function AttachmentManager({
         setAttachment({
           id: res.attachmentId || 'new-id',
           file_name: selectedFile.name,
-          file_size: selectedFile.size,
+          file_size_bytes: selectedFile.size,
           mime_type: selectedFile.type || 'application/octet-stream',
           created_at: new Date().toISOString(),
         });
@@ -140,7 +140,7 @@ export function AttachmentManager({
                 {attachment.file_name}
               </div>
               <div className="text-[11px] font-mono text-slate-400 flex items-center gap-2 mt-0.5">
-                <span>{formatBytes(attachment.file_size)}</span>
+                <span>{formatBytes(attachment.file_size_bytes)}</span>
                 <span>•</span>
                 <span className="text-cyan-400">{attachment.mime_type}</span>
               </div>

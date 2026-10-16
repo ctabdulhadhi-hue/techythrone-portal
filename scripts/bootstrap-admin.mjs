@@ -73,11 +73,20 @@ function prompt(question) {
   });
 }
 
+function getArg(flag) {
+  const idx = process.argv.indexOf(flag);
+  if (idx !== -1 && idx + 1 < process.argv.length) {
+    return process.argv[idx + 1];
+  }
+  return null;
+}
+
 async function bootstrap() {
   console.log('\n🔒 Starting Cybersecurity Challenge Portal Admin Bootstrap...\n');
 
-  let email = process.env.ADMIN_BOOTSTRAP_EMAIL;
-  let password = process.env.ADMIN_BOOTSTRAP_PASSWORD;
+  let email = getArg('--email') || process.env.ADMIN_BOOTSTRAP_EMAIL;
+  let password = getArg('--password') || process.env.ADMIN_BOOTSTRAP_PASSWORD;
+  const displayName = getArg('--name') || 'SuperAdmin';
   const isForce = process.argv.includes('--force');
 
   if (!email) {
@@ -133,7 +142,7 @@ async function bootstrap() {
       password,
       email_confirm: true,
       user_metadata: {
-        display_name: 'SuperAdmin',
+        display_name: displayName,
       },
     });
 
@@ -160,7 +169,7 @@ async function bootstrap() {
       id: userId,
       email: email.toLowerCase(),
       username: username,
-      display_name: 'SuperAdmin',
+      display_name: displayName,
       role: 'admin',
       is_active: true,
     });

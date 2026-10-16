@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 describe('Storage Zero-Trust Verification', () => {
   it('verifies service-role client module enforces server-only restriction', async () => {

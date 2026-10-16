@@ -25,7 +25,7 @@ export default async function ChallengeDetailPage({
   // Fetch challenge and attachment
   const { data: challenge, error } = await supabase
     .from('challenges')
-    .select('id, title, slug, description, category, difficulty, points, status, challenge_attachments(id, file_name, file_size, mime_type)')
+    .select('id, title, slug, description, category, difficulty, points, status, challenge_attachments(id, file_name, file_size_bytes, mime_type)')
     .eq('slug', slug)
     .single();
 
@@ -119,7 +119,7 @@ export default async function ChallengeDetailPage({
                   {attachment.file_name}
                 </div>
                 <div className="text-[11px] font-mono text-slate-400 mt-0.5">
-                  Size: {formatBytes(attachment.file_size)} • Type: {attachment.mime_type}
+                  Size: {formatBytes(attachment.file_size_bytes)} • Type: {attachment.mime_type}
                 </div>
               </div>
 
