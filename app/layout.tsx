@@ -1,9 +1,16 @@
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import './globals.css';
 
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
+
 export const metadata: Metadata = {
-  title: 'Cybersecurity Challenge Portal | Techythrone CTF',
-  description: 'Hands-on cybersecurity challenges, reverse engineering, web security, and digital forensics. Level up your cyber defense skills.',
+  title: 'Techythrone — Hands-on Cybersecurity Challenges',
+  description: 'Solve real-world inspired challenges, improve your skills, and climb the leaderboard. Built for learners, by learners.',
 };
 
 export default function RootLayout({
@@ -12,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark h-full antialiased">
-      <body className="min-h-full flex flex-col bg-[#090d16] text-slate-100 selection:bg-emerald-500 selection:text-black">
+    <html lang="en" className={`dark h-full antialiased ${inter.variable}`}>
+      <body className="min-h-full flex flex-col bg-[#0B1220] text-[#F8FAFC] selection:bg-blue-600 selection:text-white font-sans">
         {children}
       </body>
     </html>

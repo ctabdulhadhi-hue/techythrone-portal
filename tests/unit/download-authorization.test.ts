@@ -43,7 +43,7 @@ describe('5-Factor Secure Download Route Handler', () => {
 
     const response = await GET(req, { params });
     expect(response.status).toBe(307);
-    expect(response.headers.get('location')).toBe(`${baseUrl}/login?error=unauthorized`);
+    expect(response.headers.get('location')).toBe(`${baseUrl}/login?error=unauthorized&redirect=%2Fchallenges%2Freverse-101%3Fdownload%3D1`);
   });
 
   it('FACTOR 2: Redirects unconfirmed email accounts to /verify-email', async () => {
@@ -58,12 +58,23 @@ describe('5-Factor Secure Download Route Handler', () => {
       error: null,
     });
 
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { role: 'user', is_active: true, download_verified_at: null },
+        error: null,
+      }),
+    });
+
     const req = new Request(`${baseUrl}/challenges/reverse-101/download`);
     const params = Promise.resolve({ slug: 'reverse-101' });
 
     const response = await GET(req, { params });
     expect(response.status).toBe(307);
-    expect(response.headers.get('location')).toContain('/verify-email?email=unconfirmed%40example.com&error=unconfirmed');
+    expect(response.headers.get('location')).toBe(
+      `${baseUrl}/verify-email?error=unconfirmed&next=%2Fchallenges%2Freverse-101%3Fdownload%3D1&email=unconfirmed%40example.com`
+    );
   });
 
   it('FACTOR 3: Rejects deactivated user profiles', async () => {
@@ -112,7 +123,7 @@ describe('5-Factor Secure Download Route Handler', () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
-        data: { role: 'user', is_active: true },
+        data: { role: 'user', is_active: true, download_verified_at: '2026-01-01T00:00:00Z' },
         error: null,
       }),
     });
@@ -153,7 +164,7 @@ describe('5-Factor Secure Download Route Handler', () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
-        data: { role: 'user', is_active: true },
+        data: { role: 'user', is_active: true, download_verified_at: '2026-01-01T00:00:00Z' },
         error: null,
       }),
     });
@@ -203,7 +214,7 @@ describe('5-Factor Secure Download Route Handler', () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
-        data: { role: 'user', is_active: true },
+        data: { role: 'user', is_active: true, download_verified_at: '2026-01-01T00:00:00Z' },
         error: null,
       }),
     });
@@ -236,11 +247,57 @@ describe('5-Factor Secure Download Route Handler', () => {
       error: null,
     });
 
-    const req = new Request(`${baseUrl}/challenges/reverse-me/download`);
+    const req = new Request(`${baseUrl}/challenges/reverse-me/download?attachmentId=att-1`);
     const params = Promise.resolve({ slug: 'reverse-me' });
 
     const response = await GET(req, { params });
     expect(response.status).toBe(307);
     expect(response.headers.get('location')).toBe(ephemeralSignedUrl);
+  });
+
+  it('FACTOR 5b: Returns 404 when attachmentId does not match challenge attachment', async () => {
+    mockGetUser.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-valid',
+          email: 'operative@example.com',
+          email_confirmed_at: '2026-01-01T00:00:00Z',
+        },
+      },
+      error: null,
+    });
+
+    mockFrom.mockReturnValueOnce({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { role: 'user', is_active: true, download_verified_at: '2026-01-01T00:00:00Z' },
+        error: null,
+      }),
+    });
+
+    mockFrom.mockReturnValueOnce({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { id: 'chal-pub-2', title: 'Reverse Me', status: 'published' },
+        error: null,
+      }),
+    });
+
+    mockFrom.mockReturnValueOnce({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: null, // attachmentId mismatch
+        error: null,
+      }),
+    });
+
+    const req = new Request(`${baseUrl}/challenges/reverse-me/download?attachmentId=wrong-att-id`);
+    const params = Promise.resolve({ slug: 'reverse-me' });
+
+    const response = await GET(req, { params });
+    expect(response.status).toBe(404);
   });
 });

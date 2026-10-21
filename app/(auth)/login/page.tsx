@@ -16,6 +16,8 @@ export default async function LoginPage({
     initialError = 'Your account has been deactivated. Please contact an administrator.';
   } else if (params.error === 'verification_failed') {
     initialError = 'Email verification link is invalid or has expired. Please try again.';
+  } else if (params.error) {
+    initialError = params.error;
   }
 
   return (

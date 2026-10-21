@@ -6,6 +6,7 @@ export const ALLOWED_MIME_TYPES = [
   'application/x-tar',
   'application/gzip',
   'text/plain',
+  'text/html',
   'application/octet-stream',
   'application/pdf',
   'image/png',

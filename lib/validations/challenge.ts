@@ -31,7 +31,9 @@ export const challengeSchema = z.object({
   points: z
     .number()
     .int('Points must be an integer')
-    .min(0, 'Points cannot be negative'),
+    .min(0, 'Points cannot be negative')
+    .max(5000, 'Points cannot exceed 5000'),
+  flag: z.string().optional().nullable(),
   flag_hash: z.string().optional().nullable(),
   status: challengeStatusEnum.default('draft'),
 });

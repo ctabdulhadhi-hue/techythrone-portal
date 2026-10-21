@@ -28,11 +28,22 @@ export async function uploadAttachmentAction(
     return { error: 'Please select a valid non-empty file to upload.' };
   }
 
+  // Infer or normalize MIME type for HTML and common CTF attachments
+  let mimeType = file.type;
+  if (!mimeType || mimeType === 'application/octet-stream') {
+    const lowerName = file.name.toLowerCase();
+    if (lowerName.endsWith('.html') || lowerName.endsWith('.htm')) {
+      mimeType = 'text/html';
+    } else {
+      mimeType = mimeType || 'application/octet-stream';
+    }
+  }
+
   // Validate file metadata using Zod schema
   const validation = attachmentSchema.safeParse({
     fileName: file.name,
     fileSize: file.size,
-    mimeType: file.type || 'application/octet-stream',
+    mimeType,
   });
 
   if (!validation.success) {
@@ -78,7 +89,7 @@ export async function uploadAttachmentAction(
   const { error: uploadError } = await serviceRole.storage
     .from('challenge-files')
     .upload(storagePath, fileBuffer, {
-      contentType: file.type || 'application/octet-stream',
+      contentType: mimeType,
       upsert: false,
     });
 
@@ -95,7 +106,7 @@ export async function uploadAttachmentAction(
       .update({
         file_name: file.name,
         file_size_bytes: file.size,
-        mime_type: file.type || 'application/octet-stream',
+        mime_type: mimeType,
         storage_path: storagePath,
         uploaded_by: adminSession.user.id,
       })
@@ -115,7 +126,7 @@ export async function uploadAttachmentAction(
         challenge_id: challengeId,
         file_name: file.name,
         file_size_bytes: file.size,
-        mime_type: file.type || 'application/octet-stream',
+        mime_type: mimeType,
         storage_path: storagePath,
         uploaded_by: adminSession.user.id,
       })

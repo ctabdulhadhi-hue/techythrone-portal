@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { getServiceRoleClient } from '@/lib/supabase/service-role';
+import { isUserEmailVerified } from '@/lib/auth/verification';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const { origin } = new URL(request.url);
+  const { origin, searchParams } = new URL(request.url);
+  const attachmentId = searchParams.get('attachmentId');
   const supabase = await createServerClient();
 
   // FACTOR 1: Authenticated Identity Verification
@@ -16,26 +18,36 @@ export async function GET(
     error: authError,
   } = await supabase.auth.getUser();
 
-  if (authError || !user) {
-    return NextResponse.redirect(`${origin}/login?error=unauthorized`);
-  }
+  const returnPath = `/challenges/${slug}?download=1${attachmentId ? `&attachmentId=${encodeURIComponent(attachmentId)}` : ''}`;
 
-  // FACTOR 2: Genuine Email Confirmation Barrier
-  if (!user.email_confirmed_at) {
+  if (authError || !user) {
     return NextResponse.redirect(
-      `${origin}/verify-email?email=${encodeURIComponent(user.email || '')}&error=unconfirmed`
+      `${origin}/login?error=unauthorized&redirect=${encodeURIComponent(returnPath)}`,
+      { status: 307 }
     );
   }
 
   // FACTOR 3: Active Account Profile Check
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('role, is_active')
+    .select('role, is_active, download_verified_at')
     .eq('id', user.id)
     .single();
 
   if (profileError || !profile || !profile.is_active) {
-    return NextResponse.redirect(`${origin}/login?error=account_deactivated`);
+    return NextResponse.redirect(`${origin}/login?error=account_deactivated`, { status: 307 });
+  }
+
+  // FACTOR 2: Genuine Download Verification Barrier (profiles.download_verified_at)
+  const isAuthorized = isUserEmailVerified({
+    download_verified_at: profile.download_verified_at,
+  });
+
+  if (!isAuthorized) {
+    return NextResponse.redirect(
+      `${origin}/verify-email?error=unconfirmed&next=${encodeURIComponent(returnPath)}&email=${encodeURIComponent(user.email || '')}`,
+      { status: 307 }
+    );
   }
 
   // FACTOR 4: Published Challenge Check (Admins can preview drafts/archived)
@@ -57,11 +69,16 @@ export async function GET(
   }
 
   // FACTOR 5: Attachment-to-Challenge Association Verification
-  const { data: attachment, error: attachError } = await supabase
+  let attachQuery = supabase
     .from('challenge_attachments')
     .select('id, storage_path, file_name')
-    .eq('challenge_id', challenge.id)
-    .maybeSingle();
+    .eq('challenge_id', challenge.id);
+
+  if (attachmentId) {
+    attachQuery = attachQuery.eq('id', attachmentId);
+  }
+
+  const { data: attachment, error: attachError } = await attachQuery.maybeSingle();
 
   if (attachError || !attachment || !attachment.storage_path) {
     return NextResponse.json(

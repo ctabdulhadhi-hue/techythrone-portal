@@ -2,40 +2,32 @@ import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { createServerClient } from '@/lib/supabase/server';
+import { getServiceRoleClient } from '@/lib/supabase/service-role';
 import {
-  Shield,
-  Terminal,
-  KeyRound,
-  Cpu,
-  Search,
-  Paperclip,
+  Trophy,
+  Clock,
   ArrowRight,
-  Filter,
 } from 'lucide-react';
-
-const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  web: Terminal,
-  crypto: KeyRound,
-  reverse: Cpu,
-  forensics: Search,
-  pwn: Shield,
-  osint: Search,
-  misc: Shield,
-};
+import { ChallengeFilterDropdowns } from '@/components/challenges/ChallengeFilterDropdowns';
 
 export default async function ChallengesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; difficulty?: string; q?: string }>;
+  searchParams: Promise<{ category?: string; difficulty?: string; q?: string; sort?: string }>;
 }) {
   const params = await searchParams;
   const supabase = await createServerClient();
 
   let query = supabase
     .from('challenges')
-    .select('id, title, slug, description, category, difficulty, points, status, challenge_attachments(id, file_name, file_size_bytes)')
-    .eq('status', 'published')
-    .order('points', { ascending: true });
+    .select('id, title, slug, description, category, difficulty, points, status, created_at, challenge_attachments(id, file_name, file_size_bytes)')
+    .eq('status', 'published');
+
+  if (params.sort === 'points') {
+    query = query.order('points', { ascending: false });
+  } else {
+    query = query.order('created_at', { ascending: false });
+  }
 
   if (params.category) {
     query = query.eq('category', params.category);
@@ -44,7 +36,33 @@ export default async function ChallengesPage({
     query = query.eq('difficulty', params.difficulty);
   }
 
-  const { data: challenges } = await query;
+  let { data: challenges } = await query;
+
+  if (!challenges || challenges.length === 0) {
+    const serviceClient = getServiceRoleClient();
+    let pubQuery = serviceClient
+      .from('challenges')
+      .select('id, title, slug, description, category, difficulty, points, status, created_at, challenge_attachments(id, file_name, file_size_bytes)')
+      .eq('status', 'published');
+
+    if (params.sort === 'points') {
+      pubQuery = pubQuery.order('points', { ascending: false });
+    } else {
+      pubQuery = pubQuery.order('created_at', { ascending: false });
+    }
+
+    if (params.category) {
+      pubQuery = pubQuery.eq('category', params.category);
+    }
+    if (params.difficulty) {
+      pubQuery = pubQuery.eq('difficulty', params.difficulty);
+    }
+    const { data: pubChallenges } = await pubQuery;
+    if (pubChallenges && pubChallenges.length > 0) {
+      challenges = pubChallenges;
+    }
+  }
+
   let chals = challenges || [];
 
   if (params.q) {
@@ -56,175 +74,167 @@ export default async function ChallengesPage({
     );
   }
 
-  const categories = [
+  const categoryOptions = [
     { label: 'All', value: '' },
     { label: 'Web', value: 'web' },
-    { label: 'Crypto', value: 'crypto' },
-    { label: 'Reverse', value: 'reverse' },
-    { label: 'Forensics', value: 'forensics' },
-    { label: 'Pwn', value: 'pwn' },
+    { label: 'Reverse Engineering', value: 'reverse' },
+    { label: 'Cryptography', value: 'crypto' },
+    { label: 'Misc', value: 'misc' },
   ];
 
-  const difficulties = [
-    { label: 'All Difficulties', value: '' },
-    { label: 'Easy', value: 'easy' },
-    { label: 'Medium', value: 'medium' },
-    { label: 'Hard', value: 'hard' },
-    { label: 'Insane', value: 'insane' },
-  ];
+  function getCategoryBadgeColor(category: string) {
+    switch (category.toLowerCase()) {
+      case 'web':
+        return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+      case 'reverse':
+      case 'reverse engineering':
+        return 'bg-purple-500/10 text-purple-400 border-purple-500/30';
+      case 'crypto':
+      case 'cryptography':
+        return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30';
+      case 'forensics':
+        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+      default:
+        return 'bg-slate-500/10 text-slate-300 border-slate-500/30';
+    }
+  }
+
+  function getDifficultyBadgeColor(diff: string) {
+    switch (diff.toLowerCase()) {
+      case 'easy':
+        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+      case 'medium':
+        return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+      case 'hard':
+      case 'insane':
+        return 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+      default:
+        return 'bg-slate-500/10 text-slate-300 border-slate-500/30';
+    }
+  }
+
+  function estimateMinutes(points: number, diff: string) {
+    if (diff === 'easy') return '~ 10 mins';
+    if (diff === 'medium') return '~ 15 mins';
+    return points > 200 ? '~ 30 mins' : '~ 20 mins';
+  }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between">
+    <div className="min-h-screen flex flex-col justify-between bg-[#0B1220]">
       <Navbar />
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full space-y-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
-          <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-mono text-emerald-400 mb-1">
-              <Shield className="h-4 w-4" />
-              OPERATIVE_CHALLENGE_PERIMETER
-            </div>
-            <h1 className="text-3xl font-extrabold font-mono tracking-tight text-slate-100">
-              ACTIVE_CHALLENGES
-            </h1>
-            <p className="text-xs text-slate-400 font-mono mt-1">
-              Select an objective, download sanitized artifacts, exploit vulnerabilities, and capture flags.
-            </p>
-          </div>
-
-          <div className="text-right">
-            <div className="text-2xl font-extrabold font-mono text-emerald-400">
-              {chals.length}
-            </div>
-            <div className="text-[11px] font-mono text-slate-500 uppercase tracking-wider">
-              Available Labs
-            </div>
-          </div>
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 w-full space-y-8">
+        {/* Header Title */}
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight text-[#F8FAFC]">
+            Challenges
+          </h1>
+          <p className="text-sm text-[#94A3B8]">
+            Explore a variety of cybersecurity challenges and test your skills.
+          </p>
         </div>
 
-        {/* Filters and Search Bar */}
-        <div className="p-4 rounded-xl cyber-card border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
-          {/* Categories */}
+        {/* Filter Bar */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          {/* Category Filter Pills */}
           <div className="flex flex-wrap items-center gap-2">
-            <Filter className="h-4 w-4 text-slate-500 mr-1" />
-            {categories.map((cat) => (
-              <Link
-                key={cat.value}
-                href={`/challenges?category=${cat.value}${params.difficulty ? `&difficulty=${params.difficulty}` : ''}`}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${
-                  (params.category || '') === cat.value
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold'
-                    : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
-                }`}
-              >
-                {cat.label}
-              </Link>
-            ))}
+            {categoryOptions.map((cat) => {
+              const isSelected = (params.category || '') === cat.value;
+              return (
+                <Link
+                  key={cat.label}
+                  href={`/challenges?category=${cat.value}${params.difficulty ? `&difficulty=${params.difficulty}` : ''}`}
+                  className={`px-4 py-2 rounded-lg text-xs font-medium transition-all ${
+                    isSelected
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'bg-[#111C2E] border border-[#243247] text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#1A273F]'
+                  }`}
+                >
+                  {cat.label}
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Difficulty Dropdown & Search Form */}
-          <form className="flex items-center gap-2 w-full md:w-auto">
-            <select
-              name="difficulty"
-              defaultValue={params.difficulty || ''}
-              className="bg-[#05080f] border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-300 focus:outline-none focus:border-emerald-500"
-            >
-              {difficulties.map((d) => (
-                <option key={d.value} value={d.value}>
-                  {d.label}
-                </option>
-              ))}
-            </select>
-
-            <input
-              name="q"
-              type="text"
-              defaultValue={params.q || ''}
-              placeholder="Search challenges..."
-              className="bg-[#05080f] border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-300 placeholder-slate-600 focus:outline-none focus:border-emerald-500"
-            />
-
-            <button
-              type="submit"
-              className="px-3.5 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold font-mono text-xs hover:bg-emerald-400 transition-all cursor-pointer"
-            >
-              FILTER
-            </button>
-          </form>
+          {/* Right Filter Dropdowns */}
+          <ChallengeFilterDropdowns
+            currentDifficulty={params.difficulty}
+            currentSort={params.sort}
+          />
         </div>
 
         {/* Challenge Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {chals.map((c) => {
-            const Icon = categoryIcons[c.category] || Shield;
-            const attachment = Array.isArray(c.challenge_attachments)
-              ? c.challenge_attachments[0]
-              : c.challenge_attachments;
+        {chals.length === 0 ? (
+          <div className="text-center py-20 rounded-2xl bg-[#111C2E] border border-[#243247] p-8 space-y-3">
+            <h3 className="text-base font-semibold text-[#F8FAFC]">No challenges found</h3>
+            <p className="text-xs text-[#94A3B8]">
+              Try adjusting your category or difficulty filters to view more challenges.
+            </p>
+            <Link
+              href="/challenges"
+              className="inline-flex px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-500 transition-colors"
+            >
+              Reset Filters
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {chals.map((chal) => {
+              const catClass = getCategoryBadgeColor(chal.category);
+              const diffClass = getDifficultyBadgeColor(chal.difficulty);
+              const estTime = estimateMinutes(chal.points, chal.difficulty);
 
-            return (
-              <div
-                key={c.id}
-                className="rounded-xl cyber-card border border-slate-800/80 p-5 flex flex-col justify-between group hover:-translate-y-1 transition-all"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/30">
-                      <Icon className="h-3.5 w-3.5" />
-                      {c.category}
-                    </span>
-
-                    <span
-                      className={`text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded ${
-                        c.difficulty === 'easy'
-                          ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
-                          : c.difficulty === 'medium'
-                          ? 'text-amber-400 bg-amber-500/10 border border-amber-500/20'
-                          : c.difficulty === 'hard'
-                          ? 'text-rose-400 bg-rose-500/10 border border-rose-500/20'
-                          : 'text-purple-400 bg-purple-500/10 border border-purple-500/20'
-                      }`}
-                    >
-                      {c.difficulty}
-                    </span>
-                  </div>
-
-                  <h3 className="text-lg font-bold font-mono text-slate-100 group-hover:text-emerald-300 transition-colors">
-                    {c.title}
-                  </h3>
-
-                  <p className="text-xs text-slate-400 line-clamp-3 mt-2 font-sans leading-relaxed">
-                    {c.description}
-                  </p>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between">
-                  <div className="flex items-center space-x-3 text-xs font-mono">
-                    <span className="text-cyan-400 font-bold">{c.points} PTS</span>
-                    {attachment && (
-                      <span className="text-slate-500 flex items-center gap-1" title="Includes private download payload">
-                        <Paperclip className="h-3.5 w-3.5 text-slate-400" />
-                        Payload
+              return (
+                <div
+                  key={chal.id}
+                  className="rounded-2xl bg-[#111C2E] border border-[#243247] p-6 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/5 transition-all flex flex-col justify-between space-y-5"
+                >
+                  <div className="space-y-4">
+                    {/* Badge Row */}
+                    <div className="flex items-center justify-between">
+                      <span className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border capitalize ${catClass}`}>
+                        {chal.category}
                       </span>
-                    )}
+                      <span className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border capitalize ${diffClass}`}>
+                        {chal.difficulty}
+                      </span>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-lg font-bold text-[#F8FAFC] tracking-tight">
+                      {chal.title}
+                    </h3>
+
+                    {/* Description */}
+                    <p className="text-xs text-[#94A3B8] line-clamp-2 leading-relaxed">
+                      {chal.description}
+                    </p>
                   </div>
 
-                  <Link
-                    href={`/challenges/${c.slug}`}
-                    className="inline-flex items-center gap-1 text-xs font-mono text-emerald-400 hover:text-emerald-300 font-bold"
-                  >
-                    ENTER_LAB
-                    <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                  {/* Metadata and Action */}
+                  <div className="space-y-4 pt-2 border-t border-[#243247]/60">
+                    <div className="flex items-center justify-between text-xs text-[#94A3B8]">
+                      <div className="flex items-center gap-1.5 text-amber-400 font-semibold">
+                        <Trophy className="h-4 w-4" />
+                        <span>{chal.points} pts</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[#94A3B8]">
+                        <Clock className="h-3.5 w-3.5" />
+                        <span>{estTime}</span>
+                      </div>
+                    </div>
 
-        {chals.length === 0 && (
-          <div className="p-12 text-center rounded-xl cyber-card border border-slate-800 text-slate-500 font-mono text-xs">
-            No published challenges found matching your filters.
+                    <Link
+                      href={`/challenges/${chal.slug}`}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition-colors shadow-sm cursor-pointer"
+                    >
+                      <span>Start Challenge</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </main>

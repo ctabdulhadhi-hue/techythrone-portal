@@ -1,27 +1,33 @@
-import { Terminal, ShieldCheck } from 'lucide-react';
+import { TechythroneLogo } from '@/components/TechythroneLogo';
+import Link from 'next/link';
 
 export function Footer() {
   return (
-    <footer className="border-t border-slate-800/80 bg-[#070a12] text-slate-400 py-12 px-4 sm:px-6 lg:px-8 mt-auto">
+    <footer className="border-t border-[#243247] bg-[#0B1220] text-[#94A3B8] py-10 px-4 sm:px-6 lg:px-8 mt-auto">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center space-x-3">
-          <div className="h-8 w-8 rounded bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-            <Terminal className="h-4 w-4" />
-          </div>
+          <TechythroneLogo className="h-6 w-6" />
           <div>
-            <p className="text-sm font-mono text-slate-300">Techythrone Cybersecurity CTF</p>
-            <p className="text-xs text-slate-500 font-mono">Zero-Trust Architecture • Ephemeral Signed Attachments</p>
+            <p className="text-sm font-semibold text-[#F8FAFC]">Techythrone</p>
+            <p className="text-xs text-[#94A3B8]">Hands-on Cybersecurity Learning Platform</p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-6 text-xs font-mono text-slate-400">
-          <span className="flex items-center gap-1.5 text-emerald-400">
-            <ShieldCheck className="h-4 w-4" /> RLS_ENFORCED
-          </span>
-          <span className="text-slate-600">|</span>
-          <span>v2.6.1 PROD-SPEC</span>
-          <span className="text-slate-600">|</span>
-          <span className="text-slate-500">© 2026 Techythrone</span>
+        <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-[#94A3B8]">
+          <Link href="/challenges" className="hover:text-[#F8FAFC] transition-colors">
+            Challenges
+          </Link>
+          <Link href="/leaderboard" className="hover:text-[#F8FAFC] transition-colors">
+            Leaderboard
+          </Link>
+          <Link href="/dashboard" className="hover:text-[#F8FAFC] transition-colors">
+            Dashboard
+          </Link>
+          <Link href="/#about" className="hover:text-[#F8FAFC] transition-colors">
+            About
+          </Link>
+          <span>•</span>
+          <span>© 2026 Techythrone. All rights reserved.</span>
         </div>
       </div>
     </footer>

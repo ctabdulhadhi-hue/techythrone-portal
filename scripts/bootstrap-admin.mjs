@@ -86,6 +86,7 @@ async function bootstrap() {
 
   let email = getArg('--email') || process.env.ADMIN_BOOTSTRAP_EMAIL;
   let password = getArg('--password') || process.env.ADMIN_BOOTSTRAP_PASSWORD;
+  let username = getArg('--username') || process.env.ADMIN_BOOTSTRAP_USERNAME;
   const displayName = getArg('--name') || 'SuperAdmin';
   const isForce = process.argv.includes('--force');
 
@@ -95,6 +96,11 @@ async function bootstrap() {
   if (!password) {
     password = await prompt('Enter Admin Initial Password (min 8 characters): ');
   }
+  if (!username) {
+    const entered = await prompt('Enter Admin Username (press enter for default "admin"): ');
+    username = entered || 'admin';
+  }
+  username = username.toLowerCase().replace(/[^a-z0-9_]/g, '_');
 
   if (!email || !password || password.length < 8) {
     console.error('\n❌ Invalid email or password. Password must be at least 8 characters.\n');
@@ -164,11 +170,11 @@ async function bootstrap() {
 
   if (!existingProfile) {
     console.log('ℹ️ Profiles row missing. Creating new admin profile row...');
-    const username = `admin_${userId.slice(0, 6)}`;
+    const adminUsername = username || `admin_${userId.slice(0, 6)}`;
     const { error: insertProfileError } = await supabase.from('profiles').insert({
       id: userId,
       email: email.toLowerCase(),
-      username: username,
+      username: adminUsername,
       display_name: displayName,
       role: 'admin',
       is_active: true,
@@ -180,12 +186,16 @@ async function bootstrap() {
     }
   } else {
     console.log('Promoting profile to active admin...');
+    const updates = {
+      role: 'admin',
+      is_active: true,
+    };
+    if (username) {
+      updates.username = username;
+    }
     const { error: updateProfileError } = await supabase
       .from('profiles')
-      .update({
-        role: 'admin',
-        is_active: true,
-      })
+      .update(updates)
       .eq('id', userId);
 
     if (updateProfileError) {
@@ -196,9 +206,10 @@ async function bootstrap() {
 
   console.log('\n======================================================');
   console.log('✅ Admin Bootstrap Complete!');
-  console.log(`   Admin Email: ${email}`);
-  console.log(`   Role:        admin`);
-  console.log(`   Status:      active`);
+  console.log(`   Admin Email:    ${email}`);
+  console.log(`   Admin Username: ${username}`);
+  console.log(`   Role:           admin`);
+  console.log(`   Status:         active`);
   console.log('======================================================\n');
 }
 

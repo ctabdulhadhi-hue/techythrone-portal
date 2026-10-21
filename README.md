@@ -1,33 +1,45 @@
-# Cybersecurity Challenge Portal 🛡️💻
+# Techythrone Cybersecurity Challenge Portal 🛡️💻
 
-A production-grade, TryHackMe-inspired Cybersecurity Capture The Flag (CTF) Challenge Platform built for the **Techythrone Internship Assignment**.
+A production-grade, state-of-the-art Cybersecurity Capture The Flag (CTF) Challenge Platform built for the **Techythrone Security Perimeter**.
 
-Engineered with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS v4**, and **Supabase (PostgreSQL, GoTrue Auth, Private Storage)**, this platform enforces a strict **Zero-Trust Security Architecture**, **Multi-Layer PostgreSQL Row-Level Security (RLS)**, and a **5-Factor Secure Download Authorization Barrier**.
+Engineered with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS v4**, and **Supabase (PostgreSQL, GoTrue Auth, Private Storage)**, this platform enforces a strict **Zero-Trust Security Architecture**, **Multi-Layer PostgreSQL Row-Level Security (RLS)**, a **5-Factor Secure Download Authorization Barrier**, and a **Cryptographically Secure CTF Flag Submission & Deterministic Leaderboard System**.
 
 ---
 
 ## 🌟 Key Features
 
-- **TryHackMe-Inspired Cyber Aesthetic**: Immersive dark obsidian theme (`#090d16`), scanline grid backgrounds, terminal monospace typography, cyber emerald/cyan accents, and interactive simulated terminal heroes.
-- **Mandatory Email Confirmation Barrier**: Strict authentication gate preventing unconfirmed accounts from accessing sensitive challenge environments or private binary attachments.
+- **Techythrone Cyber Aesthetic**: Immersive dark obsidian theme (`#090d16`), scanline grid backgrounds, terminal monospace typography, cyber emerald/cyan accents, and interactive simulated terminal heroes.
+- **Cryptographic Flag Submission & Atomic Scoring**:
+  - Keyed HMAC-SHA-256 flag digest verification with constant-time equality check (`crypto.timingSafeEqual`) to eliminate timing side-channels.
+  - Race-safe atomic PostgreSQL function (`record_challenge_solve`) preventing double-point allocations and handling concurrent submissions cleanly.
+  - Server-enforced rate limiting (max 5 failed submissions per minute per challenge).
+  - Configurable platform flag format: `THR{...}`.
+  - Plaintext flags and flag digests are strictly guarded from direct browser access via column-level security.
+- **Global Operative Leaderboard (`/leaderboard`) & Dashboard Telemetry**:
+  - Server-side aggregated leaderboard view (`public.leaderboard`) with deterministic tie-breaking: Total Points (DESC) → Solves Count (DESC) → Earliest Final Solve Timestamp (ASC) → Username Alphabetical.
+  - Interactive top operatives telemetry widget embedded directly on the user dashboard.
+- **Application-Level Download Verification Flow**:
+  - Private challenge file attachments are protected by single-use, 15-minute expiring SHA-256 verification tokens delivered via transactional email.
+  - Dashboard exploration, challenge browsing, and safe HTML preview sandbox are available immediately without download verification.
 - **5-Factor Secure Attachment Downloads**: Challenge binaries and forensics images are stored in a private Supabase bucket and are strictly accessible via short-lived (60s) signed URLs after verifying:
   1. Authenticated session (`auth.getUser()`).
-  2. Genuine email confirmation (`email_confirmed_at != null`).
+  2. Download verification status (`profiles.download_verified_at != null`).
   3. Active profile status (`is_active == true`).
   4. Published challenge status (or active admin clearance).
   5. Verified database association between attachment and requested challenge.
 - **Defense-in-Depth PostgreSQL Security**:
-  - Ordinary users are granted `UPDATE (display_name)` only; sensitive columns (`role`, `is_active`, `email`, `username`, `id`, `created_at`, `updated_at`) are structurally immutable to non-admin callers.
+  - Ordinary users are granted `UPDATE (display_name)` only; sensitive columns (`role`, `is_active`, `email`, `username`, `id`, `created_at`, `updated_at`, `download_verified_at`) are structurally immutable to non-admin callers.
+  - Column privileges on `challenges.flag_hash` revoked from regular and anonymous callers.
   - `SECURITY INVOKER` trigger (`trg_01_guard_profile_escalation`) validates true caller identity and rejects unauthorized modifications.
   - `SECURITY DEFINER` timestamp trigger (`trg_02_update_profiles_timestamp`) safely maintains UTC timestamps using `pg_catalog.now()`.
 - **Dedicated Admin Control Panel (`/admin`)**:
   - Telemetry overview: challenge lifecycle counts, registered operatives, encrypted payload storage metrics.
-  - Challenge CRUD & lifecycle state machine (`draft` -> `published` -> `archived`).
+  - Challenge CRUD & lifecycle state machine (`draft` -> `published` -> `archived`) with flag configuration and point allocation (0 - 5000).
   - Private attachment payload manager with atomic upload, replace, and delete operations.
   - Operative management: promote vetted users to admin, suspend accounts, and built-in self-lockout prevention.
 - **User Dashboard & Public Catalog**:
   - Filterable challenge catalog (Web, Crypto, Reverse Engineering, Forensics, Pwn, OSINT).
-  - Mission briefing detail views with Markdown support and verified download gates.
+  - Mission briefing detail views with Markdown support, safe HTML previews, flag submission perimeter, and verified download gates.
   - Operative dashboard for callsign updates and solve metrics.
 - **Automated Testing Suite**:
   - Comprehensive unit and security integration tests via **Vitest** (100% passing across 34 tests).

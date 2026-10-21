@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS public.challenge_attachments (
     storage_path TEXT NOT NULL UNIQUE,
     file_size_bytes BIGINT NOT NULL CHECK (file_size_bytes > 0),
     mime_type VARCHAR(100) NOT NULL,
+    uploaded_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT pg_catalog.now() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT pg_catalog.now() NOT NULL
 );

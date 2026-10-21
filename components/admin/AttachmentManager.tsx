@@ -98,25 +98,25 @@ export function AttachmentManager({
   }
 
   return (
-    <div className="rounded-xl cyber-card border border-slate-800 p-6 space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+    <div className="rounded-2xl bg-[#111C2E] border border-[#243247] p-6 space-y-6">
+      <div className="flex items-center justify-between border-b border-[#243247] pb-4">
         <div>
-          <h3 className="text-sm font-mono font-bold text-slate-100 flex items-center gap-2">
-            <Paperclip className="h-4 w-4 text-cyan-400" />
-            CHALLENGE_ATTACHMENT_PAYLOAD
+          <h3 className="text-sm font-semibold text-[#F8FAFC] flex items-center gap-2">
+            <Paperclip className="h-4 w-4 text-blue-400" />
+            <span>Challenge Attachments</span>
           </h3>
-          <p className="text-[11px] font-mono text-slate-400">
-            Encrypted private bucket (challenge-files). Downloadable only via 60s signed URLs by verified operatives.
+          <p className="text-xs text-[#94A3B8] mt-0.5">
+            Encrypted private bucket (challenge-files). Downloadable via signed URLs exclusively by verified operatives.
           </p>
         </div>
       </div>
 
       {feedback && (
         <div
-          className={`p-3.5 rounded-lg border text-xs font-mono flex items-start gap-2.5 ${
+          className={`p-3.5 rounded-xl border text-xs flex items-start gap-2.5 ${
             feedback.isError
-              ? 'bg-rose-950/40 border-rose-500/40 text-rose-300'
-              : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+              ? 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+              : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
           }`}
         >
           {feedback.isError ? (
@@ -130,19 +130,19 @@ export function AttachmentManager({
 
       {/* Current Attachment Card */}
       {attachment ? (
-        <div className="p-4 rounded-lg bg-[#05080f] border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-4 rounded-xl bg-[#0B1220] border border-[#243247] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded bg-cyan-950/50 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shrink-0">
+            <div className="h-10 w-10 rounded-lg bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
               <FileArchive className="h-5 w-5" />
             </div>
             <div>
-              <div className="font-mono text-sm font-bold text-slate-100 break-all">
+              <div className="text-xs font-semibold text-[#F8FAFC] break-all">
                 {attachment.file_name}
               </div>
-              <div className="text-[11px] font-mono text-slate-400 flex items-center gap-2 mt-0.5">
+              <div className="text-[11px] text-[#94A3B8] flex items-center gap-2 mt-0.5">
                 <span>{formatBytes(attachment.file_size_bytes)}</span>
                 <span>•</span>
-                <span className="text-cyan-400">{attachment.mime_type}</span>
+                <span className="text-blue-400">{attachment.mime_type}</span>
               </div>
             </div>
           </div>
@@ -153,37 +153,37 @@ export function AttachmentManager({
               href={`/challenges/${challengeSlug}/download`}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-1.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/20 text-xs font-mono flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/30 hover:bg-blue-600/20 text-xs font-medium flex items-center gap-1.5 transition-colors"
               title="Test Signed Download"
             >
               <Download className="h-3.5 w-3.5" />
-              <span>TEST_DOWNLOAD</span>
+              <span>Test Download</span>
             </a>
 
             <button
               type="button"
               onClick={handleDelete}
               disabled={deleting}
-              className="px-3 py-1.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 text-xs font-mono flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
+              className="px-3 py-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
             >
               {deleting ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <Trash2 className="h-3.5 w-3.5" />
               )}
-              <span>DELETE</span>
+              <span>Delete</span>
             </button>
           </div>
         </div>
       ) : (
-        <div className="p-6 rounded-lg bg-slate-900/40 border border-dashed border-slate-700 text-center text-xs font-mono text-slate-400">
-          No payload attached to this challenge yet. Upload an archive, binary, or forensic image below.
+        <div className="p-6 rounded-xl bg-[#0B1220] border border-dashed border-[#243247] text-center text-xs text-[#94A3B8]">
+          No payload attached to this challenge yet. Upload an archive, binary, or forensic file below.
         </div>
       )}
 
       {/* Upload or Replace Form */}
-      <form onSubmit={handleUpload} className="space-y-4 pt-2">
-        <label className="block text-xs font-mono text-slate-300 uppercase">
+      <form onSubmit={handleUpload} className="space-y-3 pt-2">
+        <label className="block text-xs font-semibold text-[#F8FAFC]">
           {attachment ? 'Replace Existing Attachment (Max 50MB)' : 'Upload New Attachment (Max 50MB)'}
         </label>
 
@@ -191,23 +191,23 @@ export function AttachmentManager({
           <input
             type="file"
             onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-            className="w-full text-xs font-mono text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-mono file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 file:cursor-pointer"
+            className="w-full text-xs text-[#94A3B8] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-[#111C2E] file:text-[#F8FAFC] file:border file:border-[#243247] hover:file:bg-[#1A273F] file:cursor-pointer"
           />
 
           <button
             type="submit"
             disabled={!selectedFile || uploading}
-            className="w-full sm:w-auto px-4 py-2 rounded-lg bg-cyan-500 text-slate-950 font-bold font-mono text-xs hover:bg-cyan-400 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs disabled:opacity-50 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer shadow-sm"
           >
             {uploading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>UPLOADING...</span>
+                <span>Uploading...</span>
               </>
             ) : (
               <>
                 <Upload className="h-4 w-4" />
-                <span>{attachment ? 'REPLACE_PAYLOAD' : 'UPLOAD_PAYLOAD'}</span>
+                <span>{attachment ? 'Replace File' : 'Upload File'}</span>
               </>
             )}
           </button>

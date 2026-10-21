@@ -39,28 +39,46 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Protect /dashboard and /challenges routes
-  if (pathname.startsWith('/dashboard') || pathname.startsWith('/challenges')) {
+  // Protect /dashboard routes (challenges catalog is browseable publicly; downloads are strictly gated)
+  if (pathname.startsWith('/dashboard')) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = '/login';
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }
-
-    // Require email confirmation to access dashboard/challenges
-    if (!user.email_confirmed_at) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/verify-email';
-      return NextResponse.redirect(url);
-    }
   }
 
   // Protect /admin routes
   if (pathname.startsWith('/admin')) {
+    // Dedicated admin login page handling
+    if (pathname === '/admin/login') {
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, is_active')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.role === 'admin' && profile?.is_active) {
+          const url = request.nextUrl.clone();
+          url.pathname = '/admin';
+          return NextResponse.redirect(url);
+        }
+
+        if (profile?.role !== 'admin') {
+          const url = request.nextUrl.clone();
+          url.pathname = '/unauthorized';
+          return NextResponse.redirect(url);
+        }
+      }
+      return supabaseResponse;
+    }
+
+    // Protected admin pages require authenticated active admin
     if (!user) {
       const url = request.nextUrl.clone();
-      url.pathname = '/login';
+      url.pathname = '/admin/login';
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }

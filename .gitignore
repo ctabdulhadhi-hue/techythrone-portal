@@ -37,6 +37,21 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# testing & e2e outputs
+/coverage
+/playwright-report/
+/test-results/
+
+# supabase local temp
+/supabase/.temp/
+
+# secrets, certificates, and private keys
+*.pem
+*.key
+*.cert
+*.crt
+secrets/
+
 # vercel
 .vercel
 

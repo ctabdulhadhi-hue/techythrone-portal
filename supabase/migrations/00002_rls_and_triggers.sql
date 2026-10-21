@@ -200,7 +200,7 @@ REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.guard_profile_escalation() TO postgres, service_role, authenticated;
 GRANT EXECUTE ON FUNCTION public.update_profiles_timestamp() TO postgres, service_role, authenticated;
 GRANT EXECUTE ON FUNCTION public.update_timestamp() TO postgres, service_role, authenticated;
-GRANT EXECUTE ON FUNCTION public.handle_new_user() TO postgres, service_role;
+GRANT EXECUTE ON FUNCTION public.handle_new_user() TO postgres, service_role, supabase_auth_admin;
 
 GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.is_verified_active_user() TO authenticated, service_role;

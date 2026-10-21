@@ -5,6 +5,7 @@ import { assertAdminSession } from '@/lib/auth/assert-admin';
 import { createServerClient } from '@/lib/supabase/server';
 import { getServiceRoleClient } from '@/lib/supabase/service-role';
 import { challengeSchema, challengeStatusEnum } from '@/lib/validations/challenge';
+import { computeFlagHash, validateFlagFormat } from '@/lib/flags/crypto';
 
 export type ChallengeActionResult = {
   success?: boolean;
@@ -19,6 +20,18 @@ export async function createChallengeAction(
 ): Promise<ChallengeActionResult> {
   const adminSession = await assertAdminSession();
 
+  const rawFlag = formData.get('flag')?.toString().trim();
+  let flagHash: string | null = null;
+  if (rawFlag) {
+    if (!validateFlagFormat(rawFlag)) {
+      return {
+        error: 'Flag must follow platform format THR{...}',
+        fieldErrors: { flag: ['Flag must follow format THR{...}'] },
+      };
+    }
+    flagHash = computeFlagHash(rawFlag);
+  }
+
   const rawData = {
     title: formData.get('title'),
     slug: formData.get('slug'),
@@ -27,7 +40,8 @@ export async function createChallengeAction(
     difficulty: formData.get('difficulty'),
     points: formData.get('points') ? Number(formData.get('points')) : NaN,
     status: formData.get('status') || 'draft',
-    flag_hash: formData.get('flag_hash') || null,
+    flag: rawFlag || null,
+    flag_hash: flagHash,
   };
 
   const validation = challengeSchema.safeParse(rawData);
@@ -38,10 +52,10 @@ export async function createChallengeAction(
     };
   }
 
-  const supabase = await createServerClient();
+  const serviceClient = getServiceRoleClient();
 
   // Check slug uniqueness
-  const { data: existing } = await supabase
+  const { data: existing } = await serviceClient
     .from('challenges')
     .select('id')
     .eq('slug', validation.data.slug)
@@ -54,7 +68,7 @@ export async function createChallengeAction(
     };
   }
 
-  const { data: newChallenge, error: insertError } = await supabase
+  const { data: newChallenge, error: insertError } = await serviceClient
     .from('challenges')
     .insert({
       title: validation.data.title,
@@ -64,7 +78,7 @@ export async function createChallengeAction(
       difficulty: validation.data.difficulty,
       points: validation.data.points,
       status: validation.data.status,
-      flag_hash: validation.data.flag_hash,
+      flag_hash: flagHash,
       created_by: adminSession.user.id,
     })
     .select('id')
@@ -88,6 +102,18 @@ export async function updateChallengeAction(
 ): Promise<ChallengeActionResult> {
   await assertAdminSession();
 
+  const rawFlag = formData.get('flag')?.toString().trim();
+  let flagHashToUpdate: string | undefined = undefined;
+  if (rawFlag) {
+    if (!validateFlagFormat(rawFlag)) {
+      return {
+        error: 'Flag must follow platform format THR{...}',
+        fieldErrors: { flag: ['Flag must follow format THR{...}'] },
+      };
+    }
+    flagHashToUpdate = computeFlagHash(rawFlag);
+  }
+
   const rawData = {
     title: formData.get('title'),
     slug: formData.get('slug'),
@@ -96,7 +122,7 @@ export async function updateChallengeAction(
     difficulty: formData.get('difficulty'),
     points: formData.get('points') ? Number(formData.get('points')) : NaN,
     status: formData.get('status'),
-    flag_hash: formData.get('flag_hash') || null,
+    flag: rawFlag || null,
   };
 
   const validation = challengeSchema.safeParse(rawData);
@@ -107,10 +133,10 @@ export async function updateChallengeAction(
     };
   }
 
-  const supabase = await createServerClient();
+  const serviceClient = getServiceRoleClient();
 
   // Check if another challenge uses the same slug
-  const { data: conflicting } = await supabase
+  const { data: conflicting } = await serviceClient
     .from('challenges')
     .select('id')
     .eq('slug', validation.data.slug)
@@ -124,18 +150,23 @@ export async function updateChallengeAction(
     };
   }
 
-  const { error: updateError } = await supabase
+  const updatePayload: Record<string, unknown> = {
+    title: validation.data.title,
+    slug: validation.data.slug,
+    description: validation.data.description,
+    category: validation.data.category,
+    difficulty: validation.data.difficulty,
+    points: validation.data.points,
+    status: validation.data.status,
+  };
+
+  if (flagHashToUpdate !== undefined) {
+    updatePayload.flag_hash = flagHashToUpdate;
+  }
+
+  const { error: updateError } = await serviceClient
     .from('challenges')
-    .update({
-      title: validation.data.title,
-      slug: validation.data.slug,
-      description: validation.data.description,
-      category: validation.data.category,
-      difficulty: validation.data.difficulty,
-      points: validation.data.points,
-      status: validation.data.status,
-      flag_hash: validation.data.flag_hash,
-    })
+    .update(updatePayload)
     .eq('id', challengeId);
 
   if (updateError) {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { adminUpdateUserProfile } from '@/actions/admin/users';
-import { ShieldCheck, ShieldAlert, UserCheck, UserX, Loader2, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 export interface ProfileItem {
   id: string;
@@ -80,112 +80,89 @@ export function UserManagementTable({
   return (
     <div className="space-y-4">
       {error && (
-        <div className="p-3.5 rounded-lg bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs font-mono flex items-start gap-2.5">
+        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2.5">
           <AlertCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
           <div>{error}</div>
         </div>
       )}
 
-      <div className="rounded-xl cyber-card overflow-hidden border border-slate-800">
+      <div className="rounded-2xl bg-[#111C2E] border border-[#243247] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-mono">
-            <thead className="bg-[#05080f] text-slate-400 border-b border-slate-800 uppercase">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-[#0B1220] text-[#94A3B8] border-b border-[#243247]">
               <tr>
-                <th className="p-3.5 pl-4">Operative</th>
-                <th className="p-3.5">Email</th>
-                <th className="p-3.5">Role</th>
-                <th className="p-3.5">Account Status</th>
-                <th className="p-3.5">Enrolled</th>
-                <th className="p-3.5 pr-4 text-right">Administrative Actions</th>
+                <th className="p-3.5 pl-4 font-medium">User Profile</th>
+                <th className="p-3.5 font-medium">Email</th>
+                <th className="p-3.5 font-medium">Role</th>
+                <th className="p-3.5 font-medium">Status</th>
+                <th className="p-3.5 font-medium">Joined</th>
+                <th className="p-3.5 pr-4 text-right font-medium">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800 text-slate-300">
+            <tbody className="divide-y divide-[#243247]">
               {users.map((u) => {
-                const isCurrent = u.id === currentAdminId;
+                const isSelf = u.id === currentAdminId;
                 const isLoading = loadingId === u.id;
 
                 return (
-                  <tr key={u.id} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="p-3.5 pl-4">
-                      <div className="font-bold text-slate-100 flex items-center gap-1.5">
-                        {u.display_name}
-                        {isCurrent && (
-                          <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/30">
-                            YOU
-                          </span>
-                        )}
+                  <tr key={u.id} className="hover:bg-[#1A273F]/40 transition-colors">
+                    <td className="p-3.5 pl-4 font-semibold text-[#F8FAFC]">
+                      <div className="flex items-center gap-2">
+                        <div className="h-7 w-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-semibold text-slate-200 shrink-0">
+                          {u.display_name ? u.display_name.charAt(0).toUpperCase() : 'U'}
+                        </div>
+                        <div>
+                          <div>{u.display_name || u.username}</div>
+                          <div className="text-[11px] text-[#94A3B8]">@{u.username}</div>
+                        </div>
                       </div>
-                      <div className="text-[11px] text-slate-500">@{u.username}</div>
                     </td>
-
-                    <td className="p-3.5 text-slate-300">{u.email}</td>
-
+                    <td className="p-3.5 text-[#94A3B8]">{u.email}</td>
                     <td className="p-3.5">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase ${
-                          u.role === 'admin'
-                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                            : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
-                        }`}
-                      >
-                        {u.role === 'admin' ? (
-                          <ShieldAlert className="h-3 w-3" />
-                        ) : (
-                          <ShieldCheck className="h-3 w-3" />
-                        )}
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                        u.role === 'admin'
+                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                          : 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                      }`}>
                         {u.role}
                       </span>
                     </td>
-
                     <td className="p-3.5">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                          u.is_active
-                            ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
-                            : 'text-rose-400 bg-rose-500/10 border border-rose-500/20'
-                        }`}
-                      >
-                        {u.is_active ? 'ACTIVE' : 'DEACTIVATED'}
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                        u.is_active
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                          : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                      }`}>
+                        {u.is_active ? 'Active' : 'Suspended'}
                       </span>
                     </td>
-
-                    <td className="p-3.5 text-slate-500">
+                    <td className="p-3.5 text-[#94A3B8]">
                       {new Date(u.created_at).toLocaleDateString()}
                     </td>
-
                     <td className="p-3.5 pr-4 text-right">
-                      {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-emerald-400 inline-block" />
+                      {isSelf ? (
+                        <span className="text-[11px] text-slate-500 italic">Current Admin</span>
                       ) : (
-                        <div className="flex items-center justify-end space-x-2">
+                        <div className="inline-flex items-center gap-2">
                           <button
+                            type="button"
                             onClick={() => handleToggleRole(u)}
-                            disabled={isCurrent && u.role === 'admin'}
-                            title={u.role === 'admin' ? 'Demote to User' : 'Elevate to Admin'}
-                            className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-mono border border-slate-700 transition-colors disabled:opacity-30 cursor-pointer"
+                            disabled={isLoading}
+                            className="px-2.5 py-1 rounded bg-[#0B1220] border border-[#243247] text-[11px] text-[#94A3B8] hover:text-[#F8FAFC] hover:border-slate-500 transition-colors cursor-pointer"
                           >
-                            {u.role === 'admin' ? 'Demote' : 'Make Admin'}
+                            {u.role === 'admin' ? 'Demote' : 'Promote'}
                           </button>
-
                           <button
+                            type="button"
                             onClick={() => handleToggleActive(u)}
-                            disabled={isCurrent && u.is_active}
-                            title={u.is_active ? 'Deactivate Operative' : 'Activate Operative'}
-                            className={`px-2 py-1 rounded text-[11px] font-mono border transition-colors disabled:opacity-30 cursor-pointer ${
+                            disabled={isLoading}
+                            className={`px-2.5 py-1 rounded border text-[11px] transition-colors cursor-pointer ${
                               u.is_active
-                                ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border-rose-500/30'
-                                : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/30'
+                                ? 'bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/20'
+                                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
                             }`}
                           >
-                            {u.is_active ? (
-                              <span className="flex items-center gap-1">
-                                <UserX className="h-3 w-3" /> Deactivate
-                              </span>
-                            ) : (
-                              <span className="flex items-center gap-1">
-                                <UserCheck className="h-3 w-3" /> Activate
-                              </span>
-                            )}
+                            {u.is_active ? 'Suspend' : 'Activate'}
                           </button>
                         </div>
                       )}

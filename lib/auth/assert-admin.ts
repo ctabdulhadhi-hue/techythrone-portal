@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { createServerClient } from '@/lib/supabase/server';
 
 export interface AdminSession {
@@ -16,7 +17,7 @@ export interface AdminSession {
   };
 }
 
-export async function assertAdminSession(): Promise<AdminSession> {
+export const assertAdminSession = cache(async (): Promise<AdminSession> => {
   const supabase = await createServerClient();
   const {
     data: { user },
@@ -48,4 +49,4 @@ export async function assertAdminSession(): Promise<AdminSession> {
     },
     profile: profile as AdminSession['profile'],
   };
-}
+});
