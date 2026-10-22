@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache';
 import { assertAdminSession } from '@/lib/auth/assert-admin';
-import { createServerClient } from '@/lib/supabase/server';
 import { getServiceRoleClient } from '@/lib/supabase/service-role';
 import { adminUpdateProfileSchema } from '@/lib/validations/profile';
 
@@ -58,18 +57,3 @@ export async function adminUpdateUserProfile(
   return { success: true };
 }
 
-export async function adminGetUsers() {
-  await assertAdminSession();
-
-  const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, email, username, display_name, role, is_active, created_at, updated_at')
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data || [];
-}

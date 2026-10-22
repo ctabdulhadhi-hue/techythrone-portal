@@ -1,10 +1,19 @@
 import { assertAdminSession } from '@/lib/auth/assert-admin';
-import { adminGetUsers } from '@/actions/admin/users';
+import { createServerClient } from '@/lib/supabase/server';
 import { UserManagementTable, ProfileItem } from '@/components/admin/UserManagementTable';
 
 export default async function AdminUsersPage() {
   const adminSession = await assertAdminSession();
-  const users = await adminGetUsers();
+  const supabase = await createServerClient();
+
+  const { data: users, error } = await supabase
+    .from('profiles')
+    .select('id, email, username, display_name, role, is_active, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -18,9 +27,10 @@ export default async function AdminUsersPage() {
       </div>
 
       <UserManagementTable
-        initialUsers={users as ProfileItem[]}
+        initialUsers={(users || []) as ProfileItem[]}
         currentAdminId={adminSession.user.id}
       />
     </div>
   );
 }
+

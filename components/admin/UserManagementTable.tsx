@@ -136,7 +136,7 @@ export function UserManagementTable({
                         {u.is_active ? 'Active' : 'Suspended'}
                       </span>
                     </td>
-                    <td className="p-3.5 text-[#94A3B8]">
+                    <td className="p-3.5 text-[#94A3B8]" suppressHydrationWarning>
                       {new Date(u.created_at).toLocaleDateString()}
                     </td>
                     <td className="p-3.5 pr-4 text-right">
