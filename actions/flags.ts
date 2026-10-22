@@ -52,6 +52,12 @@ export async function submitFlagAction(
     return { error: 'ACCOUNT_DEACTIVATED: Your operative account is inactive.' };
   }
 
+  if (profile.role === 'admin') {
+    return {
+      error: 'ADMIN_NOT_ELIGIBLE: Administrators cannot participate in challenges or submit flags. Admins manage and create challenges.',
+    };
+  }
+
   // 2. Validate Flag Input
   const rawFlag = formData.get('flag');
   if (!rawFlag || typeof rawFlag !== 'string') {

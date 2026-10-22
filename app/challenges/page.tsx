@@ -3,10 +3,15 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { createServerClient } from '@/lib/supabase/server';
 import { getServiceRoleClient } from '@/lib/supabase/service-role';
+import { getAuthUser, getAuthProfile } from '@/lib/auth/session';
 import {
   Trophy,
   Clock,
   ArrowRight,
+  Plus,
+  Pencil,
+  Eye,
+  ShieldAlert,
 } from 'lucide-react';
 import { ChallengeFilterDropdowns } from '@/components/challenges/ChallengeFilterDropdowns';
 
@@ -17,6 +22,9 @@ export default async function ChallengesPage({
 }) {
   const params = await searchParams;
   const supabase = await createServerClient();
+  const user = await getAuthUser();
+  const profile = user ? await getAuthProfile() : null;
+  const isAdmin = Boolean(profile?.role === 'admin' && profile?.is_active);
 
   let query = supabase
     .from('challenges')
@@ -124,14 +132,44 @@ export default async function ChallengesPage({
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 w-full space-y-8">
-        {/* Header Title */}
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight text-[#F8FAFC]">
-            Challenges
-          </h1>
-          <p className="text-sm text-[#94A3B8]">
-            Explore a variety of cybersecurity challenges and test your skills.
-          </p>
+        {/* Header Title & Admin Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight text-[#F8FAFC]">
+                Challenges
+              </h1>
+              {isAdmin && (
+                <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
+                  <ShieldAlert className="h-3.5 w-3.5" />
+                  <span>Admin Creator Mode</span>
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-[#94A3B8]">
+              {isAdmin
+                ? 'Create, manage, and inspect platform challenges. Admins manage cyber challenges; operatives solve them.'
+                : 'Explore a variety of cybersecurity challenges and test your skills.'}
+            </p>
+          </div>
+
+          {isAdmin && (
+            <div className="flex items-center gap-2.5">
+              <Link
+                href="/admin/challenges/new"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition-colors shadow-sm cursor-pointer"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Create Challenge</span>
+              </Link>
+              <Link
+                href="/admin/challenges"
+                className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-[#111C2E] hover:bg-[#1A273F] text-slate-300 border border-[#243247] text-xs font-medium transition-colors"
+              >
+                <span>Challenge Manager</span>
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Filter Bar */}
@@ -224,13 +262,33 @@ export default async function ChallengesPage({
                       </div>
                     </div>
 
-                    <Link
-                      href={`/challenges/${chal.slug}`}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition-colors shadow-sm cursor-pointer"
-                    >
-                      <span>Start Challenge</span>
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
+                    {isAdmin ? (
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/admin/challenges/${chal.id}`}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 font-medium text-xs transition-colors cursor-pointer"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          <span>Edit Challenge</span>
+                        </Link>
+                        <Link
+                          href={`/challenges/${chal.slug}`}
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-[#0B1220] hover:bg-[#1A273F] text-slate-300 border border-[#243247] text-xs font-medium transition-colors"
+                          title="Preview Challenge"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          <span>Preview</span>
+                        </Link>
+                      </div>
+                    ) : (
+                      <Link
+                        href={`/challenges/${chal.slug}`}
+                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition-colors shadow-sm cursor-pointer"
+                      >
+                        <span>Start Challenge</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    )}
                   </div>
                 </div>
               );

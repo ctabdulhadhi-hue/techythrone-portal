@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, AlertCircle, Loader2, LogIn, ArrowRight } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Loader2, LogIn, ArrowRight, ShieldAlert, Settings } from 'lucide-react';
 import { submitFlagAction } from '@/actions/flags';
 
 interface FlagSubmissionCardProps {
@@ -12,6 +12,7 @@ interface FlagSubmissionCardProps {
   initialIsSolved?: boolean;
   solvedAt?: string | null;
   isAuthenticated: boolean;
+  isAdmin?: boolean;
 }
 
 export function FlagSubmissionCard({
@@ -21,6 +22,7 @@ export function FlagSubmissionCard({
   initialIsSolved = false,
   solvedAt,
   isAuthenticated,
+  isAdmin = false,
 }: FlagSubmissionCardProps) {
   const [flagInput, setFlagInput] = useState('');
 
@@ -28,6 +30,42 @@ export function FlagSubmissionCard({
   const [state, formAction, isPending] = useActionState(boundAction, null);
 
   const isSolved = initialIsSolved || Boolean(state?.success);
+
+  // Administrator Mode: Admins create and manage challenges; they do not participate or submit flags
+  if (isAdmin) {
+    return (
+      <div className="rounded-2xl bg-[#111C2E] border border-amber-500/30 p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-[#243247] pb-3">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="h-4 w-4 text-amber-400" />
+            <h4 className="text-sm font-semibold text-[#F8FAFC]">
+              Administrator View
+            </h4>
+          </div>
+          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 uppercase">
+            Admin Mode
+          </span>
+        </div>
+
+        <div className="p-4 rounded-xl bg-[#0B1220] border border-[#243247] text-xs space-y-2">
+          <p className="text-slate-300 leading-relaxed">
+            As an administrator, you <strong className="text-amber-400 font-semibold">create and manage</strong> challenges. Admin accounts are not eligible to participate or submit flags in competitions.
+          </p>
+          <p className="text-[11px] text-[#94A3B8]">
+            To modify flag solutions, adjust points, or update file attachments, open this challenge in the Admin Console.
+          </p>
+        </div>
+
+        <Link
+          href={`/admin/challenges/${challengeId}`}
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition-colors shadow-sm cursor-pointer"
+        >
+          <Settings className="h-3.5 w-3.5" />
+          <span>Edit in Admin Console</span>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl bg-[#111C2E] border border-[#243247] p-6 space-y-4">

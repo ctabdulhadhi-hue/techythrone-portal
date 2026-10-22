@@ -41,6 +41,7 @@ interface ChallengeWorkspaceProps {
     solved_at: string;
     points_awarded: number;
   } | null;
+  isAdmin?: boolean;
   autoDownload?: boolean;
   verifiedStatus?: string | null;
   targetAttachmentId?: string | null;
@@ -58,6 +59,7 @@ export function ChallengeWorkspace({
   attachment,
   user,
   userSolve,
+  isAdmin = false,
   autoDownload = false,
   verifiedStatus = null,
   targetAttachmentId = null,
@@ -287,6 +289,7 @@ export function ChallengeWorkspace({
             initialIsSolved={Boolean(userSolve)}
             solvedAt={userSolve?.solved_at}
             isAuthenticated={Boolean(user)}
+            isAdmin={isAdmin}
           />
 
           {/* Challenge Information Card */}

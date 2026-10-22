@@ -124,6 +124,17 @@ describe('CTF Flag Submission Server Action & Scoring Flow', () => {
     expect(res.error).toContain('ACCOUNT_DEACTIVATED');
   });
 
+  it('rejects flag submissions from administrator accounts', async () => {
+    mockGetAuthUser.mockResolvedValue({ id: 'admin-1', email: 'admin@test.local' });
+    mockGetAuthProfile.mockResolvedValue({ id: 'admin-1', role: 'admin', is_active: true });
+
+    const formData = new FormData();
+    formData.set('flag', 'THR{any_flag_string}');
+
+    const res = await submitFlagAction('chal-1', 'web-1', null, formData);
+    expect(res.error).toContain('ADMIN_NOT_ELIGIBLE');
+  });
+
   it('rejects malformed flag formats with generic guidance', async () => {
     mockGetAuthUser.mockResolvedValue({ id: 'user-1', email: 'op@test.local' });
     mockGetAuthProfile.mockResolvedValue({ id: 'user-1', is_active: true });
